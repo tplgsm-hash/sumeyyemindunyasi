@@ -2,57 +2,63 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sümeyye'nin Dünyası ❤️</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sümeyye'nin Aşk Bahçesi ❤️</title>
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;background:#241d35;color:white;
- text-align:center;font-family:monospace;
+ margin:0;background:#211c32;color:#fff;
+ font-family:monospace;text-align:center;
 }
-h1{color:#ffb4d5;margin:20px 5px 5px}
-.sub{color:#ffe0ed;margin:12px}
+h1{color:#ffb7d6;font-size:23px;margin:20px 5px 5px}
+.sub{color:#f6d7e6;font-size:12px;margin:10px}
+.game-wrap{width:96%;max-width:760px;margin:auto}
 canvas{
- width:94%;max-width:700px;
- border:5px solid #f3a9ca;
- border-radius:10px;
+ width:100%;display:block;
+ border:5px solid #f1b0ce;border-radius:12px;
  image-rendering:pixelated;
- background:#70b879;
+ box-shadow:0 5px 25px #0007;
 }
-.info{font-size:13px;color:#ffd8e9;margin:12px}
+.hint{font-size:12px;color:#f5cce0;margin:12px}
 #message{
- display:none;background:#fff0f6;color:#713d5c;
- border:3px solid #efa8c8;border-radius:12px;
- padding:18px;margin:12px auto;width:90%;
- max-width:500px;line-height:1.7;font-size:15px;
+ display:none;background:#fff0f6;color:#613a53;
+ border:3px solid #efa8c8;border-radius:14px;
+ padding:18px;margin:12px auto;max-width:550px;
+ width:94%;font-size:14px;line-height:1.7;
+}
+#message button{
+ display:block;margin:12px auto 0;padding:8px 20px;
 }
 .controls{
- display:grid;
- grid-template-columns:65px 65px 65px;
- gap:6px;justify-content:center;margin:15px;
+ display:grid;grid-template-columns:65px 65px 65px;
+ gap:6px;justify-content:center;margin:14px auto;
 }
 button{
- border:2px solid #ffd4e7;
- background:#e995bc;color:#522c43;
- border-radius:12px;padding:12px;
- font-size:22px;touch-action:none;
+ background:#e99abb;color:#542c43;
+ border:2px solid #ffd5e6;border-radius:12px;
+ padding:11px;font-family:monospace;
+ font-size:20px;touch-action:none;
 }
-#action{font-size:15px;padding:12px 25px}
-footer{color:#e9b9d2;margin:22px;font-size:12px}
+button:active{background:#ffd2e5}
+#action{font-size:14px;padding:12px 22px}
+footer{font-size:11px;color:#e8bdd1;margin:20px}
 </style>
 </head>
 <body>
 
-<h1>🌸 Sümeyye'nin Minik Dünyası 🌸</h1>
-<div class="sub">Sana özel, sevgi dolu küçük bir dünya ❤️</div>
+<h1>🌸 Sümeyye'nin Aşk Bahçesi 🌸</h1>
+<div class="sub">Küçük bir dünya, kocaman bir sevgi ❤️</div>
 
+<div class="game-wrap">
 <canvas id="game" width="480" height="360"></canvas>
-
-<div class="info">
-Yön tuşlarıyla hareket et. Nesnelere yaklaş ve E'ye bas.
 </div>
 
-<div id="message"></div>
+<div class="hint">Gezmek için yön tuşlarını kullan. Bir sürprize yaklaşınca E'ye bas.</div>
+
+<div id="message">
+ <div id="messageText"></div>
+ <button onclick="closeMessage()">Kapat 💗</button>
+</div>
 
 <div class="controls">
  <span></span><button data-dir="up">▲</button><span></span>
@@ -61,106 +67,68 @@ Yön tuşlarıyla hareket et. Nesnelere yaklaş ve E'ye bas.
  <button data-dir="right">▶️</button>
 </div>
 
-<button id="action">💗 Sürprizi keşfet</button>
-
-<footer>Sen benim en güzel hikâyemsin ❤️</footer>
+<button id="action">💌 Yakındaki sürprizi aç</button>
+<footer>Bu bahçenin en güzel çiçeği sensin. ❤️</footer>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-
-const player={x:240,y:180};
+const W=480,H=360;
+const player={x:240,y:190,step:0};
 const keys={};
+let lastMessage=null;
 
 const objects=[
- {x:90,y:110,emoji:"🌷",name:"Çiçek",
- text:"Senin gülüşün bütün çiçeklerden daha güzel. 🌷"},
- {x:380,y:110,emoji:"💗",name:"Kalp",
- text:"İyi ki yollarımız kesişmiş. İyi ki sen. ❤️"},
- {x:380,y:280,emoji:"🎁",name:"Sürpriz Sandığı",
- text:"Bu küçük dünyanın en güzel hediyesi sensin. Seni çok seviyorum! 💌"},
- {x:90,y:280,emoji:"✨",name:"Dilek Göleti",
- text:"Bir dilek tuttum: Bütün güzel yarınlarımda sen ol. ❤️"}
+ {x:95,y:115,emoji:"🌷",name:"Sana bir çiçek",
+  text:"Her çiçek bir gün solar belki... Ama sana olan sevgim hiç solmayacak. 🌷"},
+ {x:390,y:110,emoji:"💗",name:"Kalbimden sana",
+  text:"Kalbimin en güzel köşesinde hep sen varsın. İyi ki hayatımdasın. ❤️"},
+ {x:390,y:285,emoji:"🎁",name:"Sürpriz kutusu",
+  text:"Bu kutunun içinde bir sır var: Benim en büyük şansım seninle tanışmış olmak. Seni çok seviyorum! 💌"},
+ {x:90,y:285,emoji:"✨",name:"Dilek göleti",
+  text:"Bir dileğim var: Bütün güzel günlerimizi birlikte yaşamak. 🌙"}
 ];
 
-function rect(x,y,w,h,color){
- ctx.fillStyle=color;
- ctx.fillRect(x,y,w,h);
+function rect(x,y,w,h,c){
+ ctx.fillStyle=c;
+ ctx.fillRect(Math.round(x),Math.round(y),w,h);
 }
 
 function tree(x,y){
- rect(x-5,y,10,23,"#795037");
- rect(x-18,y-15,36,30,"#347b48");
+ rect(x-5,y,11,25,"#795037");
+ rect(x-19,y-15,39,31,"#34794a");
  rect(x-12,y-24,25,20,"#529b5b");
- rect(x-10,y-12,8,7,"#85c96d");
+ rect(x-12,y-11,8,7,"#80c36d");
 }
 
-function flower(x,y){
- rect(x-2,y,4,10,"#347d42");
- rect(x-8,y-7,7,7,"#ffadd0");
- rect(x+2,y-7,7,7,"#ffadd0");
- rect(x-3,y-13,7,7,"#ffe69b");
- rect(x-2,y-3,7,7,"#ff80b4");
+function flower(x,y,color="#ffadd0"){
+ rect(x-2,y,4,10,"#387b42");
+ rect(x-8,y-7,7,7,color);
+ rect(x+2,y-7,7,7,color);
+ rect(x-3,y-13,7,7,"#ffe59c");
+ rect(x-2,y-3,7,7,"#ff80b3");
 }
 
-function draw(){
- // Çimen
- rect(0,0,480,360,"#72b879");
+function drawHouse(){
+ // ev gövdesi
+ rect(25,20,115,70,"#f4d7bc");
+ rect(18,17,129,17,"#a95872");
+ rect(28,12,109,7,"#cf7b8d");
+ // kapı ve pencereler
+ rect(69,49,28,41,"#82526b");
+ rect(36,40,23,20,"#a8e0e4");
+ rect(106,40,23,20,"#a8e0e4");
+ rect(48,47,2,5,"#fff");
+ rect(117,47,2,5,"#fff");
+}
 
- for(let y=10;y<360;y+=28){
-  for(let x=10;x<480;x+=28){
-   rect(x,y,3,3,"#8bc987");
-   rect(x+12,y+10,3,3,"#579d68");
+function drawGarden(){
+ rect(0,0,W,H,"#70b777");
+
+ // Çimen dokusu
+ for(let y=8;y<H;y+=28){
+  for(let x=8;x<W;x+=28){
+   rect(x,y,3,3,"#8ac986");
+   rect(x+13,y+12,3,3,"#579c68");
   }
  }
-
- // Yol
- rect(180,0,120,360,"#c9a77b");
- rect(0,150,480,60,"#c9a77b");
-
- for(let y=0;y<360;y+=30){
-  rect(180,y,3,18,"#b18c67");
-  rect(296,y,3,18,"#b18c67");
- }
-
- // Ev
- rect(25,20,115,70,"#f4d7bc");
- rect(18,17,129,17,"#b95e78");
- rect(70,49,27,41,"#87546d");
- rect(36,40,23,20,"#a9dfe1");
- rect(106,40,23,20,"#a9dfe1");
-
- // Ağaçlar
- tree(170,65);
- tree(320,65);
- tree(45,135);
- tree(435,135);
- tree(160,310);
- tree(325,310);
-
- // Çiçekler
- [[155,110],[320,115],[155,245],
- [320,245],[35,220],[445,220],
- [220,30],[270,325]].forEach(p=>flower(p[0],p[1]));
-
- // Gölet
- rect(45,280,55,30,"#70bce0");
- rect(51,285,42,20,"#a2e3e8");
- rect(62,291,13,3,"#e1ffff");
-
- // Etkileşim nesneleri
- objects.forEach(o=>{
-  ctx.font="25px serif";
-  ctx.textAlign="center";
-  ctx.fillText(o.emoji,o.x,o.y);
- });
-
- // Avatar gölgesi
- rect(player.x-8,player.y+12,16,4,"#477c4d");
-
- // Saç
- rect(player.x-9,player.y-13,18,14,"#583449");
- rect(player.x-11,player.y-7,4,12,"#583449");
-
- // Yüz
- rect(player.x-7,player.y-9,…
